@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, useCallback } from "react";
 import { createPortal } from "react-dom";
+import { FocusTrap } from "focus-trap-react";
 
 const TOUR_KEY = "reframe_onboarding_complete";
 
@@ -14,7 +15,7 @@ interface TourStep {
 }
 
 const TOUR_STEPS: TourStep[] = [
-   {
+  {
     targetId: "upload-zone",
     title: "Drop your video here",
     description: "Click to browse or drag and drop a video file to get started.",
@@ -32,11 +33,11 @@ const TOUR_STEPS: TourStep[] = [
     description: "After uploading, set in/out points and tweak colour in the controls that appear on the left.",
     position: "left",
   },
-    {
+  {
     targetId: "export-button",
     title: "Export your video",
     description: "Click Export (or press ⌘↵) to process your video locally — nothing ever leaves your device.",
-    position: "top",  
+    position: "top",
   },
 ];
 
@@ -198,7 +199,7 @@ function Tooltip({ step, stepIndex, totalSteps, rect, onNext, onSkip, tooltipRef
             Skip tour
           </button>
           <button
-              onClick={onNext}
+            onClick={onNext}
             ref={(el) => { el?.focus(); }}
             className="px-4 py-2 rounded-lg text-sm font-medium
               bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700
@@ -218,7 +219,7 @@ export default function OnboardingTour() {
   const [visible, setVisible] = useState(false);
   const [targetRect, setTargetRect] = useState<Rect | null>(null);
   const tooltipRef = useRef<HTMLDivElement>(null);
-  const isFirstRender = useRef(true);  
+  const isFirstRender = useRef(true);
 
   const dismiss = useCallback(() => {
     localStorage.setItem(TOUR_KEY, "1");
@@ -226,70 +227,70 @@ export default function OnboardingTour() {
   }, []);
 
   const measureTarget = useCallback((id: string): Promise<Rect | null> => {
-  return new Promise((resolve) => {
-    const attempt = (tries: number) => {
-      const el = document.getElementById(id);
-      if (el) {
-        el.scrollIntoView({ behavior: "smooth", block: "center" });
-        setTimeout(() => {
-          const r = el.getBoundingClientRect();
-          resolve({ top: r.top, left: r.left, width: r.width, height: r.height });
-        }, 400); // wait for scroll to finish
-        return;
-      }
-      if (tries <= 0) {
-        resolve(null);
-        return;
-      }
-      setTimeout(() => attempt(tries - 1), 300);
-    };
-    attempt(5);
-  });
-}, []);
+    return new Promise((resolve) => {
+      const attempt = (tries: number) => {
+        const el = document.getElementById(id);
+        if (el) {
+          el.scrollIntoView({ behavior: "smooth", block: "center" });
+          setTimeout(() => {
+            const r = el.getBoundingClientRect();
+            resolve({ top: r.top, left: r.left, width: r.width, height: r.height });
+          }, 400); // wait for scroll to finish
+          return;
+        }
+        if (tries <= 0) {
+          resolve(null);
+          return;
+        }
+        setTimeout(() => attempt(tries - 1), 300);
+      };
+      attempt(5);
+    });
+  }, []);
 
   // Initialise on mount
   useEffect(() => {
-  if (localStorage.getItem(TOUR_KEY)) return;
-  const t = setTimeout(async () => {
-    const rect = await measureTarget(TOUR_STEPS[0]?.targetId ?? "");
-    if (rect) {
-      setTargetRect(rect);
-      setVisible(true);
-    }
-  }, 600);
-  return () => clearTimeout(t);
-}, [measureTarget]);
-
-// Measure target whenever step changes (skip on first render — init effect handles that)
-useEffect(() => {
-  if (!visible) return;
-  if (isFirstRender.current) {
-    isFirstRender.current = false;
-    return;
-  }
-  measureTarget(TOUR_STEPS[stepIndex]?.targetId ?? "").then((rect) => {
-    if (rect) {
-      setTargetRect(rect);
-      setTimeout(() => tooltipRef.current?.focus(), 50);
-    } else {
-      if (stepIndex < TOUR_STEPS.length - 1) {
-        setStepIndex((i) => i + 1);
-      } else {
-        dismiss();
+    if (localStorage.getItem(TOUR_KEY)) return;
+    const t = setTimeout(async () => {
+      const rect = await measureTarget(TOUR_STEPS[0]?.targetId ?? "");
+      if (rect) {
+        setTargetRect(rect);
+        setVisible(true);
       }
+    }, 600);
+    return () => clearTimeout(t);
+  }, [measureTarget]);
+
+  // Measure target whenever step changes (skip on first render — init effect handles that)
+  useEffect(() => {
+    if (!visible) return;
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
     }
-  });
-}, [stepIndex, visible, measureTarget, dismiss]);
+    measureTarget(TOUR_STEPS[stepIndex]?.targetId ?? "").then((rect) => {
+      if (rect) {
+        setTargetRect(rect);
+        setTimeout(() => tooltipRef.current?.focus(), 50);
+      } else {
+        if (stepIndex < TOUR_STEPS.length - 1) {
+          setStepIndex((i) => i + 1);
+        } else {
+          dismiss();
+        }
+      }
+    });
+  }, [stepIndex, visible, measureTarget, dismiss]);
 
   // Re-measure on resize
   useEffect(() => {
-  if (!visible) return;
-  const onResize = () => {
-    measureTarget(TOUR_STEPS[stepIndex]?.targetId ?? "").then(setTargetRect);
-  };
-  window.addEventListener("resize", onResize);
-  return () => window.removeEventListener("resize", onResize);
-}, [visible, stepIndex, measureTarget]);
+    if (!visible) return;
+    const onResize = () => {
+      measureTarget(TOUR_STEPS[stepIndex]?.targetId ?? "").then(setTargetRect);
+    };
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, [visible, stepIndex, measureTarget]);
 
   // Keyboard support
   useEffect(() => {
@@ -308,28 +309,41 @@ useEffect(() => {
   if (!visible || !targetRect) return null;
 
   return createPortal(
-    <>
-      {/* Clickable backdrop to skip */}
-      <div
-        className="fixed inset-0"
-        style={{ zIndex: 9997 }}
-        aria-hidden="true"
-        onClick={dismiss}
-      />
-      <Spotlight rect={targetRect} />
-      <Tooltip
-        step={TOUR_STEPS[stepIndex]!}
-        stepIndex={stepIndex}
-        totalSteps={TOUR_STEPS.length}
-        rect={targetRect}
-        onNext={() => {
-          if (stepIndex < TOUR_STEPS.length - 1) setStepIndex((i) => i + 1);
-          else dismiss();
-        }}
-        onSkip={dismiss}
-        tooltipRef={tooltipRef}
-      />
-    </>,
+    <FocusTrap
+      active={visible}
+      focusTrapOptions={{
+        escapeDeactivates: true,
+        clickOutsideDeactivates: false,
+        fallbackFocus: () => tooltipRef.current!,
+      }}
+    >
+      <div>
+        <div
+          className="fixed inset-0"
+          style={{ zIndex: 9997 }}
+          aria-hidden="true"
+          onClick={dismiss}
+        />
+
+        <Spotlight rect={targetRect} />
+
+        <Tooltip
+          step={TOUR_STEPS[stepIndex]!}
+          stepIndex={stepIndex}
+          totalSteps={TOUR_STEPS.length}
+          rect={targetRect}
+          onNext={() => {
+            if (stepIndex < TOUR_STEPS.length - 1) {
+              setStepIndex((i) => i + 1);
+            } else {
+              dismiss();
+            }
+          }}
+          onSkip={dismiss}
+          tooltipRef={tooltipRef}
+        />
+      </div>
+    </FocusTrap>,
     document.body
   );
 }
