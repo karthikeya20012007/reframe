@@ -14,6 +14,7 @@ export interface EditRecipe {
   quality: number;
   format: "mp4" | "webm" | "mkv" | "gif";
   stabilization: boolean;
+  denoise: boolean;
   brightness: number;
   contrast: number;
   saturation: number;
@@ -43,6 +44,7 @@ export interface BackgroundMusicOptions {
 
 export interface ExportResult {
   blobUrl: string;
+  blob: Blob;
   size: number;
   width: number;
   height: number;
@@ -81,9 +83,10 @@ export const DEFAULT_RECIPE: EditRecipe = {
   quality: 23,
   format: "mp4",
   stabilization: false,
+  denoise: false,
   brightness: 0,
-  contrast: 0,
-  saturation: 0,
+  contrast: 1,
+  saturation: 1,
   soundOnCompletion: false,
   version: RECIPE_VERSION,
 };
