@@ -18,30 +18,34 @@ const TOUR_STEPS: TourStep[] = [
   {
     targetId: "upload-zone",
     title: "Drop your video here",
-    description: "Click to browse or drag and drop a video file to get started.",
+    description:
+      "Click to browse or drag and drop a video file to get started.",
     position: "right",
   },
   {
     targetId: "preset-selector",
     title: "Pick an output format",
-    description: "Choose a preset optimised for your platform — Instagram, YouTube, TikTok and more.",
+    description:
+      "Choose a preset optimised for your platform — Instagram, YouTube, TikTok and more.",
     position: "left",
   },
   {
-    targetId: "preset-selector",
+    targetId: "trim",
     title: "Trim & adjust",
-    description: "After uploading, set in/out points and tweak colour in the controls that appear on the left.",
+    description:
+      "After uploading, set in/out points and tweak colour in the controls that appear on the left.",
     position: "left",
   },
   {
     targetId: "export-button",
     title: "Export your video",
-    description: "Click Export (or press ⌘↵) to process your video locally — nothing ever leaves your device.",
+    description:
+      "Click Export (or press ⌘↵) to process your video locally — nothing ever leaves your device.",
     position: "top",
   },
 ];
 
-const PADDING = 12; // spotlight padding around target element
+const PADDING = 12;
 const TOOLTIP_OFFSET = 16;
 
 interface Rect {
@@ -54,7 +58,7 @@ interface Rect {
 function getTooltipStyle(
   rect: Rect,
   position: TourStep["position"],
-  tooltipRef: React.RefObject<HTMLDivElement | null>
+  tooltipRef: React.RefObject<HTMLDivElement | null>,
 ): React.CSSProperties {
   const tooltip = tooltipRef.current;
   const tw = tooltip?.offsetWidth ?? 320;
@@ -73,16 +77,19 @@ function getTooltipStyle(
         top: sr.top - th - TOOLTIP_OFFSET,
         left: sr.left + sr.width / 2 - tw / 2,
       };
+
     case "left":
       return {
         top: sr.top + sr.height / 2 - th / 2,
         left: sr.left - tw - TOOLTIP_OFFSET,
       };
+
     case "right":
       return {
         top: sr.top + sr.height / 2 - th / 2,
         left: sr.left + sr.width + TOOLTIP_OFFSET,
       };
+
     case "bottom":
     default:
       return {
@@ -123,13 +130,14 @@ function Spotlight({ rect }: SpotlightProps) {
           />
         </mask>
       </defs>
+
       <rect
         width="100%"
         height="100%"
         fill="rgba(0,0,0,0.65)"
         mask="url(#spotlight-mask)"
       />
-      {/* Highlight ring */}
+
       <rect
         x={r.left}
         y={r.top}
@@ -154,7 +162,15 @@ interface TooltipProps {
   tooltipRef: React.RefObject<HTMLDivElement | null>;
 }
 
-function Tooltip({ step, stepIndex, totalSteps, rect, onNext, onSkip, tooltipRef }: TooltipProps) {
+function Tooltip({
+  step,
+  stepIndex,
+  totalSteps,
+  rect,
+  onNext,
+  onSkip,
+  tooltipRef,
+}: TooltipProps) {
   const style = getTooltipStyle(rect, step.position, tooltipRef);
   const isLast = stepIndex === totalSteps - 1;
 
@@ -172,7 +188,6 @@ function Tooltip({ step, stepIndex, totalSteps, rect, onNext, onSkip, tooltipRef
       style={{ ...style }}
       tabIndex={-1}
     >
-      {/* Progress bar */}
       <div className="h-1 rounded-t-xl overflow-hidden bg-[var(--border)]">
         <div
           className="h-full bg-indigo-500 transition-all duration-300"
@@ -181,12 +196,12 @@ function Tooltip({ step, stepIndex, totalSteps, rect, onNext, onSkip, tooltipRef
       </div>
 
       <div className="p-5">
-        {/* Step counter */}
         <p className="text-xs font-semibold tracking-widest uppercase text-indigo-500 mb-1">
           Step {stepIndex + 1} of {totalSteps}
         </p>
 
         <h2 className="text-base font-semibold mb-1">{step.title}</h2>
+
         <p className="text-sm text-[var(--muted)] leading-relaxed mb-4">
           {step.description}
         </p>
@@ -198,9 +213,12 @@ function Tooltip({ step, stepIndex, totalSteps, rect, onNext, onSkip, tooltipRef
           >
             Skip tour
           </button>
+
           <button
             onClick={onNext}
-            ref={(el) => { el?.focus(); }}
+            ref={(el) => {
+              el?.focus();
+            }}
             className="px-4 py-2 rounded-lg text-sm font-medium
               bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700
               text-white transition-colors focus-visible:outline focus-visible:outline-2
@@ -218,8 +236,10 @@ export default function OnboardingTour() {
   const [stepIndex, setStepIndex] = useState(0);
   const [visible, setVisible] = useState(false);
   const [targetRect, setTargetRect] = useState<Rect | null>(null);
+
   const tooltipRef = useRef<HTMLDivElement>(null);
   const isFirstRender = useRef(true);
+
   const currentStep = TOUR_STEPS[stepIndex];
 
   const dismiss = useCallback(() => {
@@ -227,91 +247,160 @@ export default function OnboardingTour() {
     setVisible(false);
   }, []);
 
-  const measureTarget = useCallback((id: string): Promise<Rect | null> => {
-    return new Promise((resolve) => {
-      const attempt = (tries: number) => {
-        const el = document.getElementById(id);
-        if (el) {
-          el.scrollIntoView({ behavior: "smooth", block: "center" });
-          setTimeout(() => {
-            const r = el.getBoundingClientRect();
-            resolve({ top: r.top, left: r.left, width: r.width, height: r.height });
-          }, 400); // wait for scroll to finish
-          return;
-        }
-        if (tries <= 0) {
-          resolve(null);
-          return;
-        }
-        setTimeout(() => attempt(tries - 1), 300);
-      };
-      attempt(5);
-    });
-  }, []);
+  const measureTarget = useCallback(
+    (id: string): Promise<Rect | null> => {
+      return new Promise((resolve) => {
+        const attempt = (tries: number) => {
+          const el = document.getElementById(id);
 
-  // Initialise on mount
+          if (el) {
+            el.scrollIntoView({
+              behavior: "smooth",
+              block: "center",
+            });
+
+            setTimeout(() => {
+              const r = el.getBoundingClientRect();
+
+              resolve({
+                top: r.top,
+                left: r.left,
+                width: r.width,
+                height: r.height,
+              });
+            }, 400);
+
+            return;
+          }
+
+          if (tries <= 0) {
+            resolve(null);
+            return;
+          }
+
+          setTimeout(() => attempt(tries - 1), 300);
+        };
+
+        attempt(5);
+      });
+    },
+    [],
+  );
+
   useEffect(() => {
     if (localStorage.getItem(TOUR_KEY)) return;
+
     const t = setTimeout(async () => {
-      const rect = await measureTarget(TOUR_STEPS[0]?.targetId ?? "");
+      const rect = await measureTarget(
+        TOUR_STEPS[0]?.targetId ?? "",
+      );
+
       if (rect) {
         setTargetRect(rect);
         setVisible(true);
       }
     }, 600);
+
     return () => clearTimeout(t);
   }, [measureTarget]);
 
-  // Measure target whenever step changes (skip on first render — init effect handles that)
   useEffect(() => {
     if (!visible) return;
+
     if (isFirstRender.current) {
       isFirstRender.current = false;
       return;
     }
+
     if (!currentStep) {
       dismiss();
       return;
     }
-    measureTarget(currentStep.targetId).then((rect) => {
-      if (rect) {
-        setTargetRect(rect);
-        setTimeout(() => tooltipRef.current?.focus(), 50);
-      } else {
+
+    let retryCount = 0;
+    const maxRetries = 10;
+
+    let retryTimer: number | null = null;
+
+    const tryMeasure = () => {
+      measureTarget(currentStep.targetId).then((rect) => {
+        if (rect) {
+          setTargetRect(rect);
+
+          setTimeout(() => {
+            tooltipRef.current?.focus();
+          }, 50);
+
+          retryCount = 0;
+        } else if (retryCount < maxRetries) {
+          retryCount++;
+
+          retryTimer = window.setTimeout(
+            tryMeasure,
+            500,
+          );
+        }
+      });
+    };
+
+    tryMeasure();
+
+    return () => {
+      if (retryTimer !== null) {
+        clearTimeout(retryTimer);
+      }
+    };
+  }, [
+    stepIndex,
+    visible,
+    measureTarget,
+    dismiss,
+    currentStep,
+  ]);
+
+  useEffect(() => {
+    if (!visible) return;
+
+    const onResize = () => {
+      measureTarget(
+        TOUR_STEPS[stepIndex]?.targetId ?? "",
+      ).then(setTargetRect);
+    };
+
+    window.addEventListener("resize", onResize);
+
+    return () => {
+      window.removeEventListener("resize", onResize);
+    };
+  }, [visible, stepIndex, measureTarget]);
+
+  useEffect(() => {
+    if (!visible) return;
+
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        dismiss();
+      }
+
+      if (e.key === "ArrowRight" || e.key === "Enter") {
         if (stepIndex < TOUR_STEPS.length - 1) {
           setStepIndex((i) => i + 1);
         } else {
           dismiss();
         }
       }
-    });
-  }, [stepIndex, visible, measureTarget, dismiss, currentStep]);
-
-  // Re-measure on resize
-  useEffect(() => {
-    if (!visible) return;
-    const onResize = () => {
-      measureTarget(TOUR_STEPS[stepIndex]?.targetId ?? "").then(setTargetRect);
     };
-    window.addEventListener("resize", onResize);
-    return () => window.removeEventListener("resize", onResize);
-  }, [visible, stepIndex, measureTarget]);
 
-  // Keyboard support
-  useEffect(() => {
-    if (!visible) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") dismiss();
-      if (e.key === "ArrowRight" || e.key === "Enter") {
-        if (stepIndex < TOUR_STEPS.length - 1) setStepIndex((i) => i + 1);
-        else dismiss();
-      }
-    };
     window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
+
+    return () => {
+      window.removeEventListener("keydown", onKey);
+    };
   }, [visible, stepIndex, dismiss]);
 
-  if (!visible || !targetRect || !currentStep) return null;
+  if (!visible || !targetRect || !currentStep) {
+    return null;
+  }
 
   return createPortal(
     <FocusTrap
@@ -338,14 +427,17 @@ export default function OnboardingTour() {
           totalSteps={TOUR_STEPS.length}
           rect={targetRect}
           onNext={() => {
-            if (stepIndex < TOUR_STEPS.length - 1) setStepIndex((i) => i + 1);
-            else dismiss();
+            if (stepIndex < TOUR_STEPS.length - 1) {
+              setStepIndex((i) => i + 1);
+            } else {
+              dismiss();
+            }
           }}
           onSkip={dismiss}
           tooltipRef={tooltipRef}
         />
       </div>
     </FocusTrap>,
-    document.body
+    document.body,
   );
 }
